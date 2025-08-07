@@ -65,4 +65,11 @@ The following questions were posed to guide the analysis, categorized by busines
 - **Matplotlib / Seaborn**: For data visualization.
 
 ---
+## 📂 Data Source
 
+This project uses the [Chinook Database](https://github.com/lerocha/chinook-database) – a sample database for SQL-based data analysis.  
+It is a mock digital media store, including tables for artists, albums, customers, invoices, tracks, genres, and more.
+
+The database file used: `Chinook_Sqlite.sqlite`
+
+---
