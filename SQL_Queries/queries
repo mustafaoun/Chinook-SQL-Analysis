@@ -1,0 +1,169 @@
+# SQL Queries Used in the Project
+
+This document contains all SQL queries used in the analysis phase of the Music Company Data Project. Each query answers a specific business question.
+
+---
+
+##  Which artist has the highest total sales revenue?
+
+```sql
+SELECT ar.name AS artist_name, SUM(il.unitprice * il.quantity) AS total_revenue
+FROM invoiceline AS il
+JOIN track AS t ON il.trackid = t.trackid
+JOIN album AS al ON t.albumid = al.albumid
+JOIN artist AS ar ON al.artistid = ar.artistid
+GROUP BY ar.name
+ORDER BY total_revenue DESC
+LIMIT 10;
+```
+
+---
+
+##  Which genres generate the most revenue?
+
+```sql
+SELECT g.name AS genre_name, SUM(il.unitprice * il.quantity) AS total_genre_revenue
+FROM invoiceline AS il
+JOIN track AS t ON il.trackid = t.trackid
+JOIN genre AS g ON t.genreid = g.genreid
+GROUP BY g.name
+ORDER BY total_genre_revenue DESC;
+```
+
+---
+
+##  What is the average order value (AOV)?
+
+```sql
+SELECT AVG(total) AS average_order_value
+FROM invoice;
+```
+
+---
+
+##  Which media types are most commonly sold?
+
+```sql
+SELECT mt.name AS media_type_name, COUNT(il.invoicelineid) AS total_sales_count
+FROM invoiceline AS il
+JOIN track AS t ON il.trackid = t.trackid
+JOIN mediatype AS mt ON t.mediatypeid = mt.mediatypeid
+GROUP BY mt.name
+ORDER BY total_sales_count DESC;
+```
+
+---
+
+##  Which customers have spent the most money in total?
+
+```sql
+SELECT c.firstname, c.lastname, SUM(i.total) AS total_spent
+FROM customer AS c
+JOIN invoice AS i ON c.customerid = i.customerid
+GROUP BY c.customerid, c.firstname, c.lastname
+ORDER BY total_spent DESC
+LIMIT 10;
+```
+
+---
+
+##  How many customers have not made a purchase in the last year?
+
+```sql
+SELECT
+    COUNT(c.customerid) AS customers_without_recent_purchase
+FROM
+    customer AS c
+LEFT JOIN
+    invoice AS i ON c.customerid = i.customerid
+    AND i.invoicedate >= date('now', '-1 year')
+WHERE
+    i.invoiceid IS NULL;
+```
+
+---
+
+##  What is the distribution of customer spending?
+
+```sql
+WITH CustomerSpending AS (
+    SELECT customerid, SUM(total) AS totalspent
+    FROM invoice
+    GROUP BY customerid
+)
+SELECT
+    CASE
+        WHEN totalspent > 70 THEN 'High Spender'
+        WHEN totalspent BETWEEN 40 AND 70 THEN 'Medium Spender'
+        ELSE 'Low Spender'
+    END AS spendingcategory,
+    COUNT(customerid) AS number_of_customers
+FROM CustomerSpending
+GROUP BY spendingcategory;
+```
+
+---
+
+##  Which employee (support representative) is assigned to the most valuable customers?
+
+```sql
+SELECT e.firstname, e.lastname, SUM(i.total) AS total_customer_spending
+FROM employee AS e
+JOIN customer AS c ON e.employeeid = c.supportrepid
+JOIN invoice AS i ON c.customerid = i.customerid
+GROUP BY e.employeeid, e.firstname, e.lastname
+ORDER BY total_customer_spending DESC;
+```
+
+---
+
+##  How does the number of customers per support rep compare to their total sales?
+
+```sql
+SELECT
+    e.firstname,
+    e.lastname,
+    COUNT(c.customerid) AS number_of_customers,
+    SUM(i.total) AS total_sales_from_customers
+FROM
+    employee AS e
+JOIN
+    customer AS c ON e.employeeid = c.supportrepid
+JOIN
+    invoice AS i ON c.customerid = i.customerid
+GROUP BY
+    e.employeeid, e.firstname, e.lastname
+ORDER BY
+    total_sales_from_customers DESC;
+```
+
+---
+
+##  What are the top 5 most popular playlists, based on the number of tracks?
+
+```sql
+SELECT p.name, COUNT(pt.trackid) AS number_of_tracks
+FROM playlist AS p
+JOIN playlisttrack AS pt ON p.playlistid = pt.playlistid
+GROUP BY p.name
+ORDER BY number_of_tracks DESC
+LIMIT 5;
+```
+
+---
+
+##  What is the average number of tracks per album?
+
+```sql
+SELECT
+    AVG(track_count) AS average_tracks_per_album
+FROM (
+    SELECT
+        COUNT(trackid) AS track_count
+    FROM
+        track
+    GROUP BY
+        albumid
+) AS track_counts_per_album;
+```
+
